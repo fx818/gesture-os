@@ -1,0 +1,272 @@
+# Every numeric threshold in the system lives here.
+#
+# `tools/check_no_magic_numbers.py` enforces that: no bare numeric literal other than 0, 1, -1
+# may appear in app/arbitration/ or app/decision/points/. That is what makes per-user calibration
+# and Jev point F's threshold tuning a config edit rather than a refactor.
+#
+# Layering: default.toml -> profiles/<user>.toml -> GESTURE_OS_* env -> CLI flags.
+# Nothing ever mutates this file; the calibration wizard writes profiles/<user>.toml.
+
+[latency]
+# The scope doc's design goal. NOT achievable on this machine: /dev/video0 caps at 15.3 fps
+# (65ms between frames) regardless of resolution, format or exposure, so a frame does not exist
+# more often than every 65ms. Kept as the aspiration for hardware that can deliver it; `bench`
+# reports the real gap rather than asserting success. See ADR-0006.
+precision_budget_ms = 50
+discrete_budget_ms = 500
+
+[window]
+# 550ms, not the scope doc's 250ms — because THE WINDOW'S REAL UNIT IS FRAMES OF EVIDENCE, and
+# milliseconds only stand in for that at an assumed frame rate.
+#
+# The doc assumes 30fps, where 250ms holds 7-8 frames. This camera delivers 15fps (ADR-0006), so
+# 250ms held 3-4 — too few to tell a committed sweep from a hand waving about, and almost any
+# motion looks straight over three samples.
+#
+# Measured end to end over the real fixture corpus (tools/sweep_thresholds.py):
+#   span 250ms -> 3/4 gestures detected, 2 FALSE workspace switches on casual hand movement
+#   span 400ms -> 3/4 detected, 1 false
+#   span 550ms -> 3/4 detected, 0 false
+#
+# No combination of gross.speed and gross.coherence fixed this at 250ms; raising speed only cost
+# detection. The window was the discriminator all along. On a 30fps camera, ~275ms gives the same
+# evidence. See ADR-0009.
+span_ms = 550
+# 3, not 5. min_frames=5 inside a 250ms span silently requires 20fps — and THIS CAMERA RUNS AT
+# 15fps (ADR-0006), so the window never formed and the engine was inert on real hardware. The
+# `live-desk-6s` fixture was passing its negative assertion for entirely the wrong reason.
+# 3 is the floor: velocity needs 2 samples and direction coherence needs at least 2 headings.
+min_frames = 3
+
+# --- Hysteresis layer 1: Schmitt thresholds -------------------------------------------
+# Loader ASSERTS sustain[m] < enter[m] for every mode. A config that could flutter at the
+# boundary therefore fails at load rather than in the user's hand.
+[arbitration.enter]
+idle = 0.30
+precision = 0.65
+macro = 0.70
+gross = 0.80
+panic = 0.85
+slider = 0.70
+
+[arbitration.sustain]
+idle = 0.20
+precision = 0.40
+macro = 0.50
+gross = 0.55
+panic = 0.60
+slider = 0.45
+
+# What fraction of the window must satisfy a mode's ENTER guard.
+#
+# 1.0 (every frame) is unusable in practice: a single dropped tracking frame scores 0 and kills
+# the whole window. Measured on a real swipe with 93% tracking — speed peaking at 10.3 against a
+# 1.8 threshold, sustained for 676ms against a 550ms window — the gross enter score was exactly
+# 0.00 for the entire recording, because the scattered 7% of missing frames landed in every
+# window.
+[arbitration.enter_fraction]
+idle = 1.0
+precision = 1.0
+macro = 1.0
+gross = 0.75
+slider = 1.0
+panic = 1.0
+
+# --- Hysteresis layer 2: streak (consecutive winning windows before a switch) ----------
+[arbitration.enter_frames]
+idle = 1
+precision = 3                 # ~100ms at 30fps
+macro = 2
+gross = 1                     # gross pre-empts; its "held for the whole window" guard IS its streak
+panic = 2
+slider = 2
+
+# How long a mode's enter guard must hold CONTINUOUSLY before the mode is entered.
+#
+# This is time-in-candidacy, NOT window span. The earlier design expressed it as "the guard holds
+# across the whole feature window", which silently made macro (450ms) and panic (300ms)
+# unreachable, because the window is only 250ms long. A dwell is a property of the state machine,
+# not of the sliding window.
+[arbitration.hold_ms]
+idle = 0
+precision = 0
+macro = 450        # the scope doc's 400-500ms macro dwell
+gross = 0          # gross pre-empts; its "every frame in the window" guard IS its hold
+panic = 300
+slider = 0
+
+# --- Hysteresis layer 3: minimum dwell before the incumbent can be displaced -----------
+[arbitration.min_dwell_ms]
+idle = 0
+precision = 120
+macro = 400
+gross = 0                     # preempting modes bypass dwell by design
+panic = 0
+slider = 120
+
+# --- Hysteresis layer 4: refractory period after exiting a mode -----------------------
+# Stops the release phase of a gesture immediately re-triggering it.
+[arbitration.refractory_ms]
+idle = 0
+precision = 0
+macro = 300
+gross = 500
+panic = 0
+slider = 0
+
+# What fraction of frames in the window must still satisfy a mode's guard for it to keep
+# sustaining. Below 1.0 so one dropped tracking frame does not end the mode mid-gesture.
+[arbitration.sustain_fraction]
+idle = 1.0
+precision = 0.6
+# 0.55, lowered when the window went from 250ms to 550ms (ADR-0009). The fraction is applied
+# across the whole window, so doubling its length doubled the number of consecutive clean frames
+# it demanded — 13 of 16 rather than 6 of 8 — and ordinary tracking jitter could no longer clear
+# it. A held pose scored at most 0.47 against a 0.70 threshold.
+macro = 0.55
+gross = 0.5
+# Stillness is a property of the window, not of a single frame. Requiring every frame to be still
+# meant one tracking blip aborted the panic gesture.
+panic = 0.8
+slider = 0.6
+
+[arbitration]
+idle_decay_ms = 400           # unresolved motion decays to Idle — the coffee-cup escape hatch
+
+[gross]
+speed = 1.8                   # palm-widths per second, sustained across EVERY frame in the window
+speed_sustain = 1.1
+# 0.70, from tools/calibrate_thresholds.py against the real swipe fixture: a genuine human swipe
+# has a 25th-percentile coherence of 0.70, not the 1.00 my synthetic generator produced. At 0.85
+# a real swipe cleared only by the margin of a single window. Negatives sit at 0.23 median, so
+# the separation is still wide. See ADR-0007.
+coherence = 0.70              # 1.0 = perfectly straight heading
+
+[precision]
+index_extension = 0.7
+# Schmitt pair, mirroring gross.speed / gross.speed_sustain. Enter precision only while genuinely
+# slow, but keep tracking until the hand is clearly moving fast. A single threshold made a
+# tremoring hand oscillate in and out of cursor control nine times in four seconds.
+max_palm_speed = 0.9
+max_palm_speed_sustain = 1.6
+
+[precision.one_euro]
+min_cutoff = 1.0
+beta = 0.007
+d_cutoff = 1.0
+
+[precision.pinch]
+click_close = 0.35            # palm widths; Schmitt pair so a held pinch doesn't chatter
+click_open = 0.55
+
+[slider]
+# Which parameter a held-chord pinch controls, and the pinch distance (in palm widths) that maps
+# to the top of its range. `pinch_click_close` is the bottom, so the slider spans exactly the
+# range a pinch already uses — no separate calibration.
+parameter = "volume"
+pinch_max = 1.40
+
+[macro]
+# dwell lives in [arbitration.hold_ms].macro — one source of truth
+# 0.70, measured, not guessed. A person holding a fist "as still as they comfortably can" moves at
+# a median of 0.33 palm-widths/s (p90 0.69, max 1.26 over 116 frames). At the previous 0.15 only
+# 20 of those 116 frames counted as still, so `record-pose` could not gather enough samples and a
+# real held pose would never have completed its dwell.
+#
+# The 0.15 came from a synthetic generator whose hand was almost perfectly motionless. Same
+# lesson as ADR-0007, on a different threshold: synthetic data makes a threshold look right that
+# no real hand meets.
+#
+# 0.45 rather than the measured p90 of 0.69: a held fist sits at p50 0.33, and 0.70 also admitted
+# a hand at rest (p50 0.15), which made macro fire on someone doing nothing. `record-pose` samples
+# with its own looser tolerance (macro.sample_max_speed) since gathering samples and recognising a
+# deliberate pose are different questions.
+sample_max_speed = 0.70
+max_speed = 0.45
+# 0.25, on the CORRELATION metric (mean-centred), not plain cosine. Measured against a recorded
+# fist template across the corpus: a fist-like pose scores ~0.33 while a resting hand is -0.08,
+# open palms -0.52 and a pinch -0.72. Plain cosine put everything in 0.85-0.97 and ranked the
+# actual fist lowest, so a 0.93 threshold admitted literally every pose. See app/poses.py.
+template_cosine_min = 0.25
+# The realistic CEILING for a genuine pose match on the correlation metric. Measured: a true fist
+# match scores ~0.33, not ~1.0. The guard ramps confidence against the headroom between threshold
+# and ceiling, so assuming a ceiling of 1.0 made a genuine 0.33 match score only 0.66 — under the
+# 0.70 needed to enter macro. A correct-looking threshold that nothing could ever clear.
+template_similarity_max = 0.45
+# A macro needs a DELIBERATE pose, not merely a still one.
+#
+# Stillness alone is what the scope doc's mode table says ("motion near-zero, held 400-500ms"),
+# but the same doc makes a relaxed resting hand the explicit escape hatch — and a hand resting
+# near the desk is exactly "motion near-zero, held". Taken literally, resting fired a macro after
+# 533ms. Requiring a closed/deliberate pose separates the two.
+#
+# PLACEHOLDER for the joint-angle template library (P5), which is the real answer: a macro should
+# fire when the pose MATCHES a stored template, not when openness happens to be low.
+max_openness = 0.60
+
+[panic]
+# TRUE, and this is what forces perception.max_hands back to 2.
+#
+# The one-handed fallback was tried and is not viable: with a single open palm as the trigger, the
+# kill switch fired on the `pinch-real` fixture — a hand held still in a fairly open shape, which
+# is an extremely ordinary thing to do. A panic gesture that goes off while you are working is
+# worse than no panic gesture, because people disable it.
+require_both_hands = true
+both_open_min = 0.85
+# 0.60, measured on a REAL held two-palm pose with arms extended: max-hand speed p50 0.33,
+# p75 0.59, p90 0.79 across 145 two-hand frames.
+#
+# This value has now been wrong twice for the same reason. 0.08 came from nothing; 0.20 came from
+# a SYNTHETIC two-hand fixture whose hands were nearly motionless. Both were far below what a
+# person actually does, and at both the engine's panic path never fired on real data — while the
+# watchdog, which checks per frame rather than over a window, did. The two paths disagreeing was
+# the signal that the threshold, not the logic, was wrong.
+#
+# Openness carries the discrimination here (measured 1.00 against a 0.85 requirement), which is
+# what makes a loose speed threshold safe: it is two OPEN palms held roughly still, and the
+# openness test is what a pinch or a fist fails.
+max_speed = 0.60
+hold_ms = 300
+watchdog_hold_ms = 250        # the independent detector in runtime/watchdog.py
+
+[perception]
+width = 640
+height = 480
+fps = 30                      # requested; this camera actually delivers 15.3 (ADR-0006)
+model_complexity = 0          # "lite" — the latency lever
+# 2, overriding ADR-0005's recommendation of 1, because the kill switch needs it.
+#
+# ADR-0005 is right that one hand is the big latency lever (30ms vs 67ms of inference) and right
+# that panic was "the awkward case". What it deferred turned out not to be deferrable: with
+# max_hands=1 the two-handed panic gesture CANNOT FIRE AT ALL — verified against a real recording
+# containing zero two-hand frames — and the one-handed fallback triggers on ordinary held poses.
+#
+# The latency argument is also weaker than it looked: ADR-0006 established the 50ms target is
+# unreachable on this camera regardless (65ms sensor cadence), so the extra inference is a smaller
+# share of an already-blown budget. Trading a working kill switch for latency we cannot bank is
+# the wrong trade. See ADR-0010.
+max_hands = 2
+min_detection_confidence = 0.5
+min_tracking_confidence = 0.5
+
+# Manual exposure, because auto-exposure fails badly in the common desk situation: any bright
+# source BEHIND the user (a window, a tube light) gets metered on, and the hand — the only thing
+# that matters — is crushed to a black silhouette. Measured on this machine, backlit at night:
+#
+#   auto            brightness  13/255   detection  0/12
+#   exposure=200    brightness  51/255   detection 12/12
+#   exposure=1600   brightness 146/255   detection  7/12   (over-exposed, washes out texture)
+#
+# Detection is NOT monotonic in brightness, and there is no universally right value — it depends
+# on the room. Measured on this machine within one hour:
+#
+#   dark room, backlit     auto -> 13/255, 0/12 detected    exposure=200 -> 51/255, 12/12
+#   lit room, lamp facing  auto -> 222/255, 0/12 detected   exposure=200 ->  0/12 (blown out)
+#
+# In the second case the darkest pixel in the frame was 143: a lamp pointed at the lens floods the
+# sensor with veiling glare and no exposure setting recovers it. That is a physical problem, not a
+# software one — light the user, not the lens.
+#
+# 0 = auto. Run `python tools/calibrate_camera.py --write` in your actual lighting; it sweeps
+# exposure and picks the value that maximises DETECTION rather than brightness.
+exposure = 160

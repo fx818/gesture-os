@@ -1,0 +1,36 @@
+# Compound gestures: short sequences of primitives that mean more than their parts.
+#
+# The scope doc's reason for this is arithmetic. A person reliably remembers maybe 8-12 distinct
+# poses, but sequences of 2-3 primitives from that same set cover a combinatorially larger command
+# space without anything new to memorise — the way vim's `d` + motion does.
+#
+# `within_ms` is what keeps it from firing by accident: the primitives must arrive close together,
+# so two unrelated gestures a second apart are two gestures, not a phrase.
+
+defaults:
+  # How close together the primitives must arrive to count as one phrase. This is the safety
+  # mechanism: without it, any two gestures performed minutes apart would eventually match.
+  within_ms: 1000
+
+rules:
+  # DORMANT. The horizontal sweep now emits SwitchWindow, so nothing emits SendToWorkspace and this
+  # rule cannot currently match. It is kept rather than deleted because the phrase still describes
+  # what should happen once a window-move gesture exists; `load()` does not validate sequence names
+  # against real intent kinds, so without this note it would look live and silently never fire.
+  - name: send-left-and-pin
+    sequence: [SendToWorkspace, RunMacro]
+    within_ms: 1200
+    action: tile_left
+    description: Sweep a window left, then hold a pose to pin it there.
+
+  - name: double-left
+    sequence: [SwitchWindow, SwitchWindow]
+    within_ms: 900
+    action: previous_window_x2
+    description: Two quick left sweeps skip two windows at once.
+
+  - name: point-then-fist
+    sequence: [ButtonPress, RunMacro]
+    within_ms: 1000
+    action: copy
+    description: Click to place the caret, then hold a pose to copy the selection.

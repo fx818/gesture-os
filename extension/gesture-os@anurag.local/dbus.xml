@@ -1,0 +1,45 @@
+<node>
+  <!-- org.gestureos.Shell — the minimum surface gesture-os needs from the compositor.
+       Versioned: the Python client checks ApiVersion on connect and refuses to run against a
+       mismatch rather than silently calling a method whose meaning has changed. -->
+  <interface name="org.gestureos.Shell">
+    <!-- A METHOD, not a property. GJS's Gio.DBusExportedObject.wrapJSObject failed to pack a
+         declared property getter ("Argument string may not be null" out of _handlePropertyGet),
+         which aborted enable() before the bus name was ever owned. A method has none of that
+         ambiguity, and this interface is called from Python, not from a properties browser. -->
+    <method name="GetApiVersion">
+      <arg type="u" direction="out" name="version"/>
+    </method>
+
+    <!-- JSON rather than a D-Bus struct array: the shape changes as the project learns what it
+         needs, and a JSON string keeps the interface stable while that happens. -->
+    <method name="ListWindows">
+      <arg type="s" direction="out" name="windows_json"/>
+    </method>
+    <method name="GetLayout">
+      <arg type="s" direction="out" name="layout_json"/>
+    </method>
+    <method name="GetFocused">
+      <arg type="s" direction="out" name="window_json"/>
+    </method>
+
+    <method name="MoveWindowTo">
+      <arg type="t" direction="in" name="window_id"/>
+      <arg type="i" direction="in" name="x"/>
+      <arg type="i" direction="in" name="y"/>
+      <arg type="i" direction="in" name="width"/>
+      <arg type="i" direction="in" name="height"/>
+      <arg type="b" direction="out" name="ok"/>
+    </method>
+    <method name="SendToMonitor">
+      <arg type="t" direction="in" name="window_id"/>
+      <arg type="i" direction="in" name="monitor"/>
+      <arg type="b" direction="out" name="ok"/>
+    </method>
+    <method name="SendToWorkspace">
+      <arg type="t" direction="in" name="window_id"/>
+      <arg type="i" direction="in" name="workspace"/>
+      <arg type="b" direction="out" name="ok"/>
+    </method>
+  </interface>
+</node>

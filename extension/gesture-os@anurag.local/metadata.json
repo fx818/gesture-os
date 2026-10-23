@@ -1,0 +1,8 @@
+{
+  "uuid": "gesture-os@anurag.local",
+  "name": "Gesture OS Window Control",
+  "description": "Exposes window enumeration and placement over D-Bus so the gesture-os daemon can move windows on Wayland, where no public API exists for it.",
+  "shell-version": ["47", "48", "49", "50"],
+  "version-name": "1.0",
+  "url": "https://github.com/anurag/gesture-os"
+}

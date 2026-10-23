@@ -1,0 +1,100 @@
+# Dependency contract. `make lint` runs this; CI fails on a violation.
+#
+# The forbidden contracts below are not style — each one is a bug class that has already been
+# designed out, and the linter is what stops it being designed back in.
+
+[importlinter]
+root_package = app
+include_external_packages = True
+
+[importlinter:contract:layers]
+name = Layered architecture
+type = layers
+layers =
+    app.cli
+    app.runtime
+    app.hud | app.routing | app.context | app.telemetry
+    app.decision | app.effectors | app.perception
+    app.arbitration
+    app.features
+    app.intents | app.config | app.naming
+    app.poses | app.actions | app.text_spans | app.ui_actions
+    app.types
+exhaustive = False
+
+[importlinter:contract:jev-firewall]
+name = The Jev firewall — arbitration may never reach the network
+type = forbidden
+source_modules =
+    app.arbitration
+    app.features
+forbidden_modules =
+    app.decision
+    app.effectors
+    app.perception
+    app.routing
+    app.runtime
+    typesafe_sdk
+    httpx
+    requests
+
+[importlinter:contract:pure-core]
+name = features/ depends on nothing but types and config
+type = forbidden
+source_modules =
+    app.features
+forbidden_modules =
+    app.intents
+    app.hud
+    app.context
+    app.naming
+
+[importlinter:contract:typesafe-sdk-one-door]
+name = typesafe_sdk has exactly one importer
+allow_indirect_imports = True
+type = forbidden
+source_modules =
+    app.cli
+    app.runtime
+    app.routing
+    app.context
+    app.effectors
+    app.perception
+    app.hud
+forbidden_modules =
+    typesafe_sdk
+
+[importlinter:contract:vision-one-door]
+name = mediapipe and cv2 have exactly one importer
+allow_indirect_imports = True
+type = forbidden
+source_modules =
+    app.arbitration
+    app.features
+    app.decision
+    app.effectors
+    app.routing
+    app.context
+    app.hud
+    app.runtime
+forbidden_modules =
+    mediapipe
+    cv2
+
+[importlinter:contract:os-one-door]
+name = evdev, gi and dbus are confined to effectors/backends
+allow_indirect_imports = True
+type = forbidden
+source_modules =
+    app.arbitration
+    app.features
+    app.decision
+    app.perception
+    app.routing
+    app.intents
+    app.types
+    app.config
+forbidden_modules =
+    evdev
+    gi
+    dbus

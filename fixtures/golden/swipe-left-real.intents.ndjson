@@ -1,0 +1,8 @@
+{"args": {"direction": "left"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 6453.891}
+{"event": "mode", "mode": "gross", "t_ms": 6453.891}
+{"event": "mode", "mode": "idle", "t_ms": 7164.991}
+{"args": {"direction": "left"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 7920.876}
+{"event": "mode", "mode": "gross", "t_ms": 7920.876}
+{"event": "mode", "mode": "idle", "t_ms": 8607.349}
+{"args": {"direction": "left"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 11331.517}
+{"event": "mode", "mode": "gross", "t_ms": 11331.517}

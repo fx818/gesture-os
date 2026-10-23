@@ -1,0 +1,12 @@
+{
+  "name": "swipe_right",
+  "fps_nominal": 30.0,
+  "width": 640,
+  "height": 480,
+  "model": "synthetic",
+  "git_sha": "",
+  "recorded": "",
+  "notes": "seed=0",
+  "segments": [],
+  "frames": 30
+}

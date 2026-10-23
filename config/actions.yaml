@@ -1,0 +1,93 @@
+# The closed set of things a gesture can be bound to.
+#
+# This file is why an invalid binding is STRUCTURALLY impossible rather than merely unlikely.
+# Jev never generates an action name — it picks one of these ids — so the worst a misunderstood
+# instruction (or an injected one) can achieve is the wrong action from this list, never an
+# arbitrary command.
+#
+# `description` is sent to Jev as the option's meaning, so it is written for a reader who knows
+# nothing about this project. `contexts` narrows where an action is even offered.
+
+actions:
+  tile_left:
+    label: Tile left
+    description: Put the focused window on the left half of the screen.
+    contexts: [any]
+  tile_right:
+    label: Tile right
+    description: Put the focused window on the right half of the screen.
+    contexts: [any]
+  maximize:
+    label: Maximize
+    description: Make the focused window fill the whole screen.
+    contexts: [any]
+  tile_main:
+    label: Send to main
+    description: Move the focused window into the large primary working area.
+    contexts: [any]
+  tile_side:
+    label: Send to side panel
+    description: Move the focused window into the narrow column beside the main area, for
+      reference material you consult while working elsewhere.
+    contexts: [any]
+  tile_background:
+    label: Send to background
+    description: Tuck the focused window into a small corner, for something you glance at
+      occasionally rather than work in.
+    contexts: [any]
+  next_workspace:
+    label: Next workspace
+    description: Switch to the next virtual desktop.
+    contexts: [any]
+  previous_workspace:
+    label: Previous workspace
+    description: Switch to the previous virtual desktop.
+    contexts: [any]
+  next_monitor:
+    label: Send to next monitor
+    description: Move the focused window to the next physical display.
+    contexts: [any]
+  show_desktop:
+    label: Show desktop
+    description: Hide all windows and reveal the desktop.
+    contexts: [any]
+  undo:
+    label: Undo
+    description: Reverse the last action, whatever it was.
+    contexts: [any]
+  copy:
+    label: Copy
+    description: Copy the current selection to the clipboard.
+    contexts: [code_editor, document_editor, browser, terminal]
+  paste:
+    label: Paste
+    description: Paste whatever is on the clipboard at the cursor position.
+    contexts: [code_editor, document_editor, browser, terminal]
+  save:
+    label: Save
+    description: Save the current file or document.
+    contexts: [code_editor, document_editor]
+  find:
+    label: Find
+    description: Open the search box to look for text on the page or in the file.
+    contexts: [code_editor, document_editor, browser]
+  new_tab:
+    label: New tab
+    description: Open a new tab in the current window.
+    contexts: [browser, terminal, code_editor]
+  close_tab:
+    label: Close tab
+    description: Close the tab that is currently open.
+    contexts: [browser, terminal, code_editor]
+  next_slide:
+    label: Next slide
+    description: Advance to the next slide in a presentation.
+    contexts: [presentation]
+  previous_slide:
+    label: Previous slide
+    description: Go back to the previous slide in a presentation.
+    contexts: [presentation]
+  play_pause:
+    label: Play or pause
+    description: Start or stop playback of video or music.
+    contexts: [media_player, browser]

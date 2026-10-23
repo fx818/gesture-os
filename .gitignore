@@ -1,0 +1,24 @@
+.env
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime state — never committed
+~/.local/share/gesture-os/
+*.sqlite
+misfires/
+
+# Recorded sessions are committed; raw video never is
+*.mp4
+*.mkv
+
+# MediaPipe model — 7.5MB binary, fetched by `make model`
+models/*.task

@@ -1,0 +1,9 @@
+mediapipe>=1.0.1
+typesafe-sdk>=0.6.0
+pyyaml>=6.0
+python-dotenv>=1.0.0
+pytest>=8.0.0
+hypothesis>=6.100.0
+import-linter>=2.0
+# python3-evdev comes from apt (PyPI evdev 2.0.0 is sdist-only and needs a compiler)
+# gi / Atspi come from system site-packages — venv must use --system-site-packages

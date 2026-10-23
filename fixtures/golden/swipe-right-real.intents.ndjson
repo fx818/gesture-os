@@ -1,0 +1,18 @@
+{"args": {"direction": "right"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 1522.293}
+{"event": "mode", "mode": "gross", "t_ms": 1522.293}
+{"event": "mode", "mode": "idle", "t_ms": 2115.629}
+{"args": {"direction": "right"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 3818.417}
+{"event": "mode", "mode": "gross", "t_ms": 3818.417}
+{"event": "mode", "mode": "idle", "t_ms": 4705.41}
+{"args": {"direction": "left"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 5361.924}
+{"event": "mode", "mode": "gross", "t_ms": 5361.924}
+{"event": "mode", "mode": "idle", "t_ms": 5954.351}
+{"args": {"direction": "right"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 6577.638}
+{"event": "mode", "mode": "gross", "t_ms": 6577.638}
+{"event": "mode", "mode": "idle", "t_ms": 7369.004}
+{"args": {"direction": "right"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 9301.284}
+{"event": "mode", "mode": "gross", "t_ms": 9301.284}
+{"event": "mode", "mode": "idle", "t_ms": 9762.784}
+{"args": {"direction": "right"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 11863.285}
+{"event": "mode", "mode": "gross", "t_ms": 11863.285}
+{"event": "mode", "mode": "idle", "t_ms": 12877.634}

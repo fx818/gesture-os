@@ -1,0 +1,2 @@
+{"args": {"direction": "right"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 500.0}
+{"event": "mode", "mode": "gross", "t_ms": 500.0}

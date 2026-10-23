@@ -1,0 +1,12 @@
+{
+  "name": "camera",
+  "fps_nominal": 30.0,
+  "width": 640,
+  "height": 480,
+  "model": "mediapipe_hands@1.0.1",
+  "git_sha": "",
+  "recorded": "2026-09-18T12:43:54+0530",
+  "notes": "device=0 mirror=True",
+  "segments": [],
+  "frames": 179
+}

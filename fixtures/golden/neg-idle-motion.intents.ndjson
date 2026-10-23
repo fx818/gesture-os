@@ -1,0 +1,6 @@
+{"args": {"direction": "left"}, "event": "intent", "intent": "SwitchWindow", "mode": "gross", "t_ms": 3329.875}
+{"event": "mode", "mode": "gross", "t_ms": 3329.875}
+{"event": "mode", "mode": "idle", "t_ms": 4870.467}
+{"args": {}, "event": "intent", "intent": "ShowOverview", "mode": "gross", "t_ms": 9561.925}
+{"event": "mode", "mode": "gross", "t_ms": 9561.925}
+{"event": "mode", "mode": "idle", "t_ms": 10157.98}
